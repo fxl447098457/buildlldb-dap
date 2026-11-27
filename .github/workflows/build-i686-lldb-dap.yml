@@ -33,15 +33,15 @@ jobs:
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
           if errorlevel 1 exit /b 1
-          cmake --build llvm32-build --target lldb-vscode --parallel 4
+          cmake --build llvm32-build --target lldb-dap --parallel 4
           if errorlevel 1 exit /b 1
 
       - name: Package debugger
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force artifact | Out-Null
-          $exe = Get-ChildItem -Path llvm32-build -Recurse -Filter lldb-vscode.exe | Select-Object -First 1
-          if (-not $exe) { throw 'lldb-vscode.exe was not produced' }
+          $exe = Get-ChildItem -Path llvm32-build -Recurse -Filter lldb-dap.exe | Select-Object -First 1
+          if (-not $exe) { throw 'lldb-dap.exe was not produced' }
           Copy-Item $exe.FullName artifact\lldb-dap.exe
 
       - name: Publish reusable release asset
