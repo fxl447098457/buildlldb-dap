@@ -71,6 +71,11 @@ jobs:
           $bin = Split-Path $exe.FullName
           Get-ChildItem $bin -Filter '*lldb*.dll' | Copy-Item -Destination artifact
           Get-ChildItem $bin -Filter 'libLLVM*.dll' | Copy-Item -Destination artifact
+          foreach ($runtime in 'MSVCP140.dll', 'VCRUNTIME140.dll') {
+            $path = Join-Path $env:WINDIR "SysWOW64\$runtime"
+            if (-not (Test-Path $path)) { throw "$runtime was not found in SysWOW64" }
+            Copy-Item $path artifact
+          }
 
       - name: Publish reusable release asset
         uses: softprops/action-gh-release@v2
