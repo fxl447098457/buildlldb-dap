@@ -1,0 +1,49 @@
+name: build-i686-lldb-dap
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout workflow repository
+        uses: actions/checkout@v4
+
+      - name: Fetch LLVM 21.1.3 sources
+        shell: pwsh
+        run: |
+          git clone --depth 1 --branch llvmorg-21.1.3 --filter=blob:none --sparse https://github.com/llvm/llvm-project.git llvm-project
+          cd llvm-project
+          git sparse-checkout set llvm lldb clang cmake
+
+      - name: Configure native i686 LLDB
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
+          if errorlevel 1 exit /b 1
+          cmake -S llvm-project\llvm -B llvm32-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DLLVM_ENABLE_PROJECTS="clang;lldb" -DLLVM_EXTERNAL_LDB_SOURCE_DIR=llvm-project\lldb -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLDB_INCLUDE_TESTS=OFF -DLLDB_ENABLE_PYTHON=OFF -DLLDB_ENABLE_LUA=OFF -DLLDB_ENABLE_CURSES=OFF -DLLDB_ENABLE_LIBEDIT=OFF -DLLDB_ENABLE_LZMA=OFF -DLLDB_ENABLE_LIBXML2=OFF -DLLVM_ENABLE_ZLIB=OFF -DLLVM_ENABLE_ZSTD=OFF
+          if errorlevel 1 exit /b 1
+
+      - name: Build lldb-dap
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
+          if errorlevel 1 exit /b 1
+          cmake --build llvm32-build --target lldb-dap --parallel 4
+          if errorlevel 1 exit /b 1
+
+      - name: Package debugger
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifact | Out-Null
+          $exe = Get-ChildItem -Path llvm32-build -Recurse -Filter lldb-dap.exe | Select-Object -First 1
+          if (-not $exe) { throw 'lldb-dap.exe was not produced' }
+          Copy-Item $exe.FullName artifact\lldb-dap.exe
+
+      - name: Upload native i686 debugger
+        uses: actions/upload-artifact@v4
+        with:
+          name: lldb-dap-i686
+          path: artifact/lldb-dap.exe
+          if-no-files-found: error
