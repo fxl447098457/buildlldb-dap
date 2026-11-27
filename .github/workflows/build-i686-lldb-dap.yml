@@ -20,6 +20,16 @@ jobs:
           cd llvm-project
           git sparse-checkout set llvm lldb clang cmake
 
+      - name: Patch LLVM 18 ProgressEvent include
+        shell: pwsh
+        run: |
+          $p = 'llvm-project/lldb/tools/lldb-dap/ProgressEvent.h'
+          $s = Get-Content $p -Raw
+          if (-not $s.Contains('#include <chrono>')) {
+            $s = $s.Replace('#include <atomic>', "#include <atomic>`n#include <chrono>")
+            Set-Content -Path $p -Value $s -NoNewline
+          }
+
       - name: Configure native i686 LLDB
         shell: cmd
         run: |
