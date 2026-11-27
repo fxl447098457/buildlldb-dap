@@ -43,18 +43,21 @@ jobs:
           $exe = Get-ChildItem -Path llvm32-build -Recurse -Filter lldb-dap.exe | Select-Object -First 1
           if (-not $exe) { throw 'lldb-dap.exe was not produced' }
           Copy-Item $exe.FullName artifact\lldb-dap.exe
+          $bin = Split-Path $exe.FullName
+          Get-ChildItem $bin -Filter '*lldb*.dll' | Copy-Item -Destination artifact
+          Get-ChildItem $bin -Filter 'libLLVM*.dll' | Copy-Item -Destination artifact
 
       - name: Publish reusable release asset
         uses: softprops/action-gh-release@v2
         with:
           tag_name: lldb-dap-i686-llvm18.1.8
           name: lldb-dap i686 (LLVM 18.1.8)
-          files: artifact/lldb-dap.exe
+          files: artifact/*
           fail_on_unmatched_files: true
 
       - name: Upload native i686 debugger
         uses: actions/upload-artifact@v4
         with:
           name: lldb-dap-i686
-          path: artifact/lldb-dap.exe
+          path: artifact/*
           if-no-files-found: error

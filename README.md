@@ -7,8 +7,8 @@ Run the **build-i686-lldb-dap** GitHub Actions workflow manually. Each successfu
 run publishes:
 
 - an Actions artifact named `lldb-dap-i686`;
-- a reusable GitHub Release tagged `lldb-dap-i686-llvm18.1.8`, with
-  `lldb-dap.exe` as its asset.
+- a reusable GitHub Release tagged `lldb-dap-i686-llvm18.1.8`, containing
+  `lldb-dap.exe` and its LLDB/LLVM runtime DLLs.
 
 In tkEdit, set `[debug] adapter` to the downloaded executable, or set
 `TKEDIT_LLDB_DAP` to its full path for a test or portable toolchain.
