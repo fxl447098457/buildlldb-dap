@@ -34,9 +34,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: llvm32-build
-          key: llvm18-i686-${{ github.run_id }}-${{ github.run_attempt }}
+          key: llvm18-i686-${{ hashFiles('.github/workflows/build-i686-lldb-dap.yml') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            llvm18-i686-
+            llvm18-i686-${{ hashFiles('.github/workflows/build-i686-lldb-dap.yml') }}-
+            llvm18-i686-45975080159-1
 
       - name: Configure native i686 LLDB
         shell: cmd
@@ -45,6 +46,13 @@ jobs:
           if errorlevel 1 exit /b 1
           cmake -S llvm-project\llvm -B llvm32-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DLLVM_ENABLE_PROJECTS="clang;lldb" -DLLVM_EXTERNAL_LDB_SOURCE_DIR=llvm-project\lldb -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_BUILD_TOOLS=OFF -DLLVM_INCLUDE_UTILS=OFF -DLLVM_ENABLE_BINDINGS=OFF -DCLANG_INCLUDE_TESTS=OFF -DCLANG_INCLUDE_DOCS=OFF -DLLDB_INCLUDE_TESTS=OFF -DLLDB_ENABLE_PYTHON=OFF -DLLDB_ENABLE_LUA=OFF -DLLDB_ENABLE_CURSES=OFF -DLLDB_ENABLE_LIBEDIT=OFF -DLLDB_ENABLE_LZMA=OFF -DLLDB_ENABLE_LIBXML2=OFF -DLLVM_ENABLE_ZLIB=OFF -DLLVM_ENABLE_ZSTD=OFF
           if errorlevel 1 exit /b 1
+
+      - name: Refresh restored build timestamps
+        shell: pwsh
+        run: |
+          if (Test-Path llvm32-build) {
+            Get-ChildItem llvm32-build -Recurse -File | ForEach-Object { $_.LastWriteTime = Get-Date }
+          }
 
       - name: Build lldb-dap
         shell: cmd
@@ -59,7 +67,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: llvm32-build
-          key: llvm18-i686-${{ github.run_id }}-${{ github.run_attempt }}
+          key: llvm18-i686-${{ hashFiles('.github/workflows/build-i686-lldb-dap.yml') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Package debugger
         shell: pwsh
